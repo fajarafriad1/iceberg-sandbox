@@ -67,10 +67,8 @@ services:
       - "7079:7079"
     volumes:
       - ./notebooks:/home/jovyan
-      - ./spark/jars:/opt/extra-jars
     environment:
       - JUPYTER_ENABLE_LAB=yes
-      - SPARK_EXTRA_CLASSPATH=/opt/extra-jars/*
     command: >
       bash -c "
         start-notebook.sh --NotebookApp.token='' --NotebookApp.password=''

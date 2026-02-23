@@ -36,3 +36,9 @@ echo $SPARK_HOME
 ls $SPARK_HOME
 ls $SPARK_HOME/jars/
 exit
+ls
+cd ..
+ls
+exit
+ls
+cd ~
