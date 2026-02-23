@@ -1,0 +1,140 @@
+version: "3.8"
+
+services:
+  iceberg-sandbox-spark-master:
+    image: bitnamilegacy/spark:3.5.0
+    container_name: iceberg-sandbox-spark-master
+    hostname: iceberg-sandbox-spark-master
+    ports:
+      - "127.0.0.1:3080:8080"
+      - "127.0.0.1:7077:7077"
+    volumes:
+      - ./spark/apps:/opt/spark-apps
+      - ./spark/data:/opt/spark-data
+      - ./spark/spark-events:/opt/bitnami/spark/spark-events
+      - ./spark/jars:/opt/extra-jars
+    command: >
+      bash -c "
+        cp /opt/extra-jars/*.jar /opt/bitnami/spark/jars/ &&
+        /opt/bitnami/scripts/spark/entrypoint.sh /opt/bitnami/scripts/spark/run.sh
+      "
+    environment:
+      - SPARK_MODE=master
+      - SPARK_LOCAL_IP=iceberg-sandbox-spark-master
+      - SPARK_EVENTLOG_ENABLED=true
+    networks:
+      - iceberg-net
+
+
+  iceberg-sandbox-spark-worker:
+    image: bitnamilegacy/spark:3.5.0
+    container_name: iceberg-sandbox-spark-worker
+    hostname: iceberg-sandbox-spark-worker
+    depends_on:
+      - iceberg-sandbox-spark-master
+    ports:
+      - "127.0.0.1:3081:8081"
+    volumes:
+      - ./spark/apps:/opt/spark-apps
+      - ./spark/data:/opt/spark-data
+      - ./spark/spark-events:/opt/bitnami/spark/spark-events
+      - ./spark/jars:/opt/extra-jars
+    command: >
+      bash -c "
+        cp /opt/extra-jars/*.jar /opt/bitnami/spark/jars/ &&
+        /opt/bitnami/scripts/spark/entrypoint.sh /opt/bitnami/scripts/spark/run.sh
+      "
+    environment:
+      - SPARK_MODE=worker
+      - SPARK_MASTER_URL=spark://iceberg-sandbox-spark-master:7077
+      - SPARK_WORKER_CORES=2
+      - SPARK_WORKER_MEMORY=2G
+      - SPARK_LOCAL_IP=iceberg-sandbox-spark-worker
+      - SPARK_EVENTLOG_ENABLED=true
+    networks:
+      - iceberg-net
+
+
+  iceberg-sandbox-jupyter:
+    container_name: iceberg-sandbox-jupyter
+    hostname: iceberg-sandbox-jupyter
+    build:
+      context: .
+      dockerfile: Dockerfile_jupyter
+    ports:
+      - "127.0.0.1:3888:8888"
+      - "7078:7078"
+      - "7079:7079"
+    volumes:
+      - ./notebooks:/home/jovyan
+      - ./spark/jars:/opt/extra-jars
+    environment:
+      - JUPYTER_ENABLE_LAB=yes
+      - SPARK_EXTRA_CLASSPATH=/opt/extra-jars/*
+    command: >
+      bash -c "
+        start-notebook.sh --NotebookApp.token='' --NotebookApp.password=''
+      "
+    networks:
+      - iceberg-net
+
+  iceberg-sandbox-minio:
+    image: minio/minio:latest
+    container_name: iceberg-sandbox-minio
+    hostname: iceberg-sandbox-minio
+    command: server /data --console-address ":9001"
+    ports:
+      - "127.0.0.1:9003:9000"
+      - "127.0.0.1:9004:9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    volumes:
+      - ./minio/data:/data
+      #- ./object-storage/dataset:/data/dataset
+    networks:
+      - iceberg-net
+
+  iceberg-sandbox-trino:
+    image: trinodb/trino:446
+    container_name: iceberg-sandbox-trino
+    hostname: iceberg-sandbox-trino
+    ports:
+      - "127.0.0.1:8085:8080"
+    volumes:
+      - ./trino/etc:/etc/trino
+    networks:
+      - iceberg-net
+
+
+  iceberg-sandbox-gravitino:
+    image: apache/gravitino:1.1.0
+    container_name: iceberg-sandbox-gravitino
+    hostname: iceberg-sandbox-gravitino
+    ports:
+      - "127.0.0.1:8090:8090"
+      - "127.0.0.1:9001:9001"
+    volumes:
+      - ./gravitino/conf:/opt/gravitino/conf
+      - ./gravitino/data:/root/gravitino/data
+    networks:
+      - iceberg-net
+
+  iceberg-sandbox-postgres:
+    image: postgres:13
+    container_name: iceberg-sandbox-postgres
+    environment:
+      POSTGRES_DB: iceberg-jdbc-catalog
+      POSTGRES_USER: iceberg
+      POSTGRES_PASSWORD: iceberg
+    ports:
+      - "127.0.0.1:5437:5432"
+    volumes:
+      - ./postgres/data:/var/lib/postgresql/data
+      - ./postgres/init:/docker-entrypoint-initdb.d
+    networks:
+      - iceberg-net
+
+networks:
+  iceberg-net:
+    driver: bridge

@@ -1,0 +1,16 @@
+# Data folders
+postgres/data
+spark/data
+spark/spark-events
+minio-data
+gravitino/data
+
+# Python
+__pycache__/
+*.pyc
+
+# Jupyter
+.ipynb_checkpoints/
+
+# OS
+.DS_Store

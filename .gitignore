@@ -1,0 +1,16 @@
+# Runtime storage
+postgres/data/
+minio/data/
+
+# Python
+__pycache__/
+*.pyc
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Spark logs
+spark/spark-events/
+
+# OS
+.DS_Store

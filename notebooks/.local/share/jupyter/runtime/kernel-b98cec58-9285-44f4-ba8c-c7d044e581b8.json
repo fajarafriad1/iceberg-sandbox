@@ -1,0 +1,13 @@
+{
+  "shell_port": 40673,
+  "iopub_port": 54883,
+  "stdin_port": 41725,
+  "control_port": 40803,
+  "hb_port": 49493,
+  "ip": "127.0.0.1",
+  "key": "7f23833a-d92f10d71149cbf3d3a1fd30",
+  "transport": "tcp",
+  "signature_scheme": "hmac-sha256",
+  "kernel_name": "python3",
+  "jupyter_session": "/home/jovyan/test_spark_iceberg.ipynb"
+}

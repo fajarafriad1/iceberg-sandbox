@@ -1,0 +1,51 @@
+# Use Jupyter PySpark image
+FROM jupyter/pyspark-notebook:spark-3.5.0
+
+USER root
+
+# ----------------------------------------------------
+# System dependencies
+# ----------------------------------------------------
+RUN apt-get update -o Acquire::Retries=5 && \
+    apt-get install -y --no-install-recommends \
+        openjdk-17-jdk \
+        libpq-dev \
+        net-tools \
+        iputils-ping \
+        iproute2 \
+        dnsutils \
+        telnet \
+        netcat-openbsd \
+        curl \
+        wget \
+        acl && \
+    rm -rf /var/lib/apt/lists/*
+
+ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+ENV PATH=$JAVA_HOME/bin:$PATH
+
+# ----------------------------------------------------
+# Spark Dependencies (same versions as Spark image)
+# ----------------------------------------------------
+WORKDIR /usr/local/spark/jars
+
+# Iceberg Spark Runtime
+RUN wget https://repo1.maven.org/maven2/org/apache/iceberg/iceberg-spark-runtime-3.5_2.12/1.5.2/iceberg-spark-runtime-3.5_2.12-1.5.2.jar
+
+# Hadoop AWS
+RUN wget https://repo1.maven.org/maven2/org/apache/hadoop/hadoop-aws/3.3.4/hadoop-aws-3.3.4.jar
+
+# AWS SDK Bundle
+RUN wget https://repo1.maven.org/maven2/com/amazonaws/aws-java-sdk-bundle/1.12.262/aws-java-sdk-bundle-1.12.262.jar
+
+# PostgreSQL JDBC Driver
+RUN wget https://repo1.maven.org/maven2/org/postgresql/postgresql/42.6.0/postgresql-42.6.0.jar
+
+# ----------------------------------------------------
+# Python dependencies
+# ----------------------------------------------------
+COPY requirements.txt /tmp/requirements.txt
+
+USER jovyan
+
+RUN pip install --no-cache-dir --user -r /tmp/requirements.txt

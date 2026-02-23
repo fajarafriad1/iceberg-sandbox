@@ -1,0 +1,7 @@
+pandas
+scikit-learn
+clickhouse-driver
+boto3
+pyspark==3.5.0
+apache-flink
+
